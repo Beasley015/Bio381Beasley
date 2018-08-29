@@ -1,12 +1,15 @@
 ---
-title: "Testpage"
+title: "BIO 381"
 author: "Emily Beasley"
-date: "August 29, 2018"
-output: html_document
+output: 
+ prettydoc::html_pretty:
+    theme: tactile
+    highlight: github
 ---
 
-#Home
+*A page for organizing the coursework for BIO 381: Computational Ecology*
+
 
 ###Homework Assignments
 
-*[Homework1](hw1.html)
+* Homework 1: Creating This Page
