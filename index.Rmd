@@ -7,7 +7,55 @@ output:
     highlight: github
 ---
 
-*A page for organizing the coursework for BIO 381: Computational Ecology*
+*A page for organizing the coursework for BIO 381: Computational Ecology... And a plot, to make the page less empty.*
+
+
+```{r, include = T, echo = F, warning = F}
+#install.packages("ggplot2"")
+library(ggplot2)
+library(gridExtra)
+library(grid)
+
+#write out functions for lines
+negexp1<-function(x){
+  y = 6^(-1/2*x)
+}
+
+negexp2<-function(x){
+  y = 2^(-1/2*x)
+}
+
+exp1<-function(x){
+  y = 2.51^x/100
+}
+
+exp2<-function(x){
+  y = 3.5^x/100
+}
+
+#make text grobs
+smol<-textGrob("Small", gp=gpar(fontsize=14, fontface="bold"), rot = 68)
+big<-textGrob(label="Large", gp=gpar(fontsize=14, fontface="bold"), rot = 63)
+rightthere<-textGrob("Near", gp=gpar(fontsize=14, fontface="bold"), rot = -38)
+wayoverthere<-textGrob("Far", gp=gpar(fontsize=14, fontface="bold"), rot = -62)
+
+#now make a plot
+ggplot()+
+  stat_function(aes(0:5), fun = negexp1, size = 1.5, color = "limegreen")+
+  stat_function(aes(0:5), fun = negexp2, size = 1.5, color = "limegreen")+
+  stat_function(aes(0:5), fun = exp1, size = 1.5)+
+  stat_function(aes(0:5), fun = exp2, n = 250, size = 1.5)+
+  annotation_custom(big, xmax = 4.3, xmin=4.3, ymin = 0.64, ymax = 0.64)+
+  annotation_custom(smol, xmax = 3.1, xmin=3.1, ymin = 0.64, ymax = 0.64)+
+  annotation_custom(rightthere, xmax = 1.55, xmin=1.55, ymin = 0.64, ymax = 0.64)+
+  annotation_custom(wayoverthere, xmax = 0.7, xmin=0.7, ymin = 0.62, ymax = 0.64)+
+  scale_y_continuous(limit = c(0,1), sec.axis = sec_axis(~., name = "Extinction Rate"))+
+  theme_bw()+
+  labs(x = "Species Richness", y = "Colonization Rate")+
+  theme(axis.title = element_text(size = 16), axis.text = element_text(size = 14),
+        panel.grid = element_blank(), rect = element_rect(fill = "transparent"))
+  
+```
 
 
 ###Homework Assignments
