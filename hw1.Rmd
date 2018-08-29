@@ -1,0 +1,8 @@
+---
+title: "Homework 1"
+author: "Emily Beasley"
+date: "August 29, 2018"
+output: html_document
+---
+
+This is where my first hw assignment will go
