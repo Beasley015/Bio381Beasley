@@ -7,7 +7,7 @@ output:
     highlight: github
 ---
 
-*A page for organizing the coursework for BIO 381: Computational Ecology... And a plot, to make the page less empty.*
+*A page for organizing the coursework for BIO 381: Computational Ecology... And for now a plot, to make the page less empty.*
 
 
 ```{r, include = T, echo = F, warning = F}
