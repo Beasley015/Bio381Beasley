@@ -1,0 +1,26 @@
+---
+title: 'Homework 2: Thinking on Paper'
+author: "Emily Beasley"
+date: "September 5, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+###DipSwitch Table
+
+```{r, include = F}
+dstable<-read.csv(file = "DipSwitchTable.csv")
+```
+
+```{r, echo = F, results='asis'}
+kable(dstable)
+```
+
+###Logic Tree
+Based on the literature, abandoned farms should have the highest species richness, abundance, and diversity due to increased habitat complexity. The following tree is a method for testing the habitat complexity hypothesis.  
+
+![](logictree.png)

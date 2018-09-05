@@ -1,0 +1,13 @@
+Habitat Type,Highest Richness,Highest Abundance,Possible Explanation
+Active farm,X,O,Rich increases with food availability
+Active farm,O,X,Abund increases with food availability
+Active farm,O,O,Rich/Abund lowest with lowest habitat complexity
+Active farm,X,X,Rich/Abund increase with food availability
+Abandoned farm,X,O,Rich increases with habitat complexity; low amount of individual niches limit abund
+Abandoned farm,O ,X,"Abund increases with habitat complexity, but generalists only"
+Abandoned farm,O,O,Depauparate transition community
+Abandoned farm,X,X,Rich/Abund increase with habitat complexity
+Forest,X,O,Richness increases with stability
+Forest,O,X,Abund increases with stability; specialists exclude generalists
+Forest,O,O,Lower habitat complexity + lower food availability limits both metrics
+Forest,X,X,Rich/Abund increase with stability

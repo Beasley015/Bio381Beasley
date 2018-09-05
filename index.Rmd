@@ -60,4 +60,5 @@ ggplot()+
 
 ###Homework Assignments
 
-* Homework 1: Creating This Page
+* Homework 1: Creating This Page  
+* [Homework 2: Thinking on Paper](hw2.html)
