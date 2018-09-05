@@ -3,7 +3,7 @@ Active farm,X,O,Rich increases with food availability
 Active farm,O,X,Abund increases with food availability
 Active farm,O,O,Rich/Abund lowest with lowest habitat complexity
 Active farm,X,X,Rich/Abund increase with food availability
-Abandoned farm,X,O,Rich increases with habitat complexity; low amount of individual niches limit abund
+Abandoned farm,X,O,Rich increases with habitat complexity; low relative proportion of niche type limits abund
 Abandoned farm,O ,X,"Abund increases with habitat complexity, but generalists only"
 Abandoned farm,O,O,Depauparate transition community
 Abandoned farm,X,X,Rich/Abund increase with habitat complexity
