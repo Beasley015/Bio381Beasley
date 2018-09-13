@@ -62,3 +62,4 @@ ggplot()+
 
 * Homework 1: Creating This Page  
 * [Homework 2: Thinking on Paper](hw2.html)
+* [Homework 3: Beamer slides](beamer.pdf)

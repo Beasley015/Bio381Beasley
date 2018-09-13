@@ -1,0 +1,65 @@
+---
+title: 'Homework 3: Beamer Slides'
+author: "Emily Beasley"
+date: "September 12, 2018"
+output: 
+  beamer_presentation: 
+    colortheme: seahorse
+    incremental: yes
+---
+
+## Are you ready for...
+
+2019 MARCH MAMMAL MADNESS!
+
+## What is \color{red}#MMM?
+
+- Like NCAA march madness... but for nerds
+- Simulated "battles" that account for size, weaponry, behavior, etc.
+- Battle narratives are live-tweeted for maximum drama
+
+## Sample bracket
+
+ \begin{picture}(320,250)
+ \put(10,20){\includegraphics[height=8cm]
+ {MammalMarchMadness2018Bracketv1_3.png}}
+ \end{picture}
+
+## Benefits of \color{red}#MMM
+
+Educators use \color{red}#MMM \color{black}to teach...  
+```
+- Evolution  
+- Ecology  
+- SciComm  
+```  
+...but most of us are just here for the shenanigans
+
+## There have been weird moments in \color{red}#MMM \color{black}
+Stoats as Measurement, for example...
+
+\begin{picture}(320,250)
+\put(40,75){\includegraphics[height=6cm]
+{StoatsAsMeasurement.jpg}}
+\put(40,80){\begin{minipage}[t]{1\linewidth}
+{Image credit: Charon Henning}
+\end{minipage}}
+\end{picture}
+
+##And let's not forget
+
+\begin{picture}(320,250)
+\put(70,30){\includegraphics[height=7cm]
+{tardigandalf.jpg}}
+\put(110,230){\begin{minipage}[t]{1\linewidth}
+{TARDIGANDALF!!!}
+\end{minipage}}
+\end{picture}
+
+##  
+
+So fill out a bracket.  
+It's fun.  
+And the organizers put a lot more effort into it  
+than I did these slides.
+
