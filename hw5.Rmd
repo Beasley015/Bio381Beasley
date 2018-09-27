@@ -1,0 +1,79 @@
+---
+title: "Homework 5"
+author: "Emily Beasley"
+date: "September 26, 2018"
+output: html_document
+---
+
+```{r setup, include = F}
+knitr::opts_chunk$set(echo = TRUE, warning = F)
+library(dplyr)
+library(tidyr)
+```
+
+```{r}
+iris <- iris
+glimpse(iris)
+
+```
+
+Iris dataset has 150 observations and 5 variables.
+
+```{r}
+iris1 <- filter(iris, Species == c("virginica", "versicolor"), Sepal.Length > 6,
+                Sepal.Width > 2.5)
+glimpse(iris1)
+```
+
+iris1 has 28 observations of 5 variables.
+
+```{r}
+iris2 <- select(iris1, Species, Sepal.Length, Sepal.Width)
+glimpse(iris2)
+```
+
+iris2 has 28 observations of 3 variables.
+
+```{r}
+iris3 <- arrange(iris2, desc(Sepal.Length))
+head(iris3)
+```
+
+```{r}
+iris4 <- mutate(iris3, Sepal.Area = (Sepal.Length*Sepal.Width))
+glimpse(iris4)
+```
+
+iris4 has 28 observations of 4 variables.
+
+```{r}
+iris5 <- summarize(iris4, avg.length = mean(Sepal.Length), avg.width = mean(Sepal.Width), sample.size = length(Species))
+
+print(iris5)
+```
+
+```{r}
+iris6 <- group_by(iris4, Species)
+iris6 <- summarize(iris6, av.sep.length = mean(Sepal.Length), av.sep.width = mean(Sepal.Width), sample.size = n())
+
+print(iris6)
+```
+
+Clean up that code by piping:
+```{r}
+iris <- iris
+iris %>%
+  filter(Sepal.Length > 6, Sepal.Width > 2.5, 
+         Species == c("versicolor","virginica")) %>%
+  select(Species, Sepal.Length, Sepal.Width) %>%
+  mutate(Sepal.Area = (Sepal.Length*Sepal.Width)) %>%
+  group_by(Species) %>%
+  summarize(av.sep.length = mean(Sepal.Length), av.sep.width = 
+              mean(Sepal.Width),sample.size = n()) %>%
+  {. ->> iris6 }
+
+print(iris6)
+
+#I don't know why this method gets slightly different counts
+#It's the same code as above
+```

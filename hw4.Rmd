@@ -107,6 +107,13 @@ replace with: \1,
 ```
 Here, I searched for 1 or more consecutive non-space characters `/S+`, stopping when it found a string of more than one space character `?(?=\s{1, })`. I added the sequence of multiple spaces at the end of the search string `\s{1, }`. Then I changed the strings of multuple space characters to commas.
 
+An alternative solution found in collaboration with Jessica Cole:
+```text
+find: \h{2, }
+replace: ,
+```
+Finds a character string of 2 or more horizontal spaces, which excludes line breaks, and replaces them with a comma. Works just as well as the above solution but is also elegant as hell.
+
 7. Change this:
 ```text
 Ballif, Bryan, University of Vermont
