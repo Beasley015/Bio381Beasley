@@ -1,0 +1,215 @@
+---
+title: "Homework 6"
+author: "Emily Beasley"
+date: "October 3, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = F)
+library(ggplot2)
+library(MASS)
+library(tidyverse)
+```
+Code for generated data is comment out. All outputs are of data from my master's thesis.
+
+Generate or read in data:
+```{r}
+# #Generate a truncated normal distribution
+# z <- rnorm(n=3000,mean=0.2)
+# z <- data.frame(1:3000,z)
+# names(z) <- list("ID","myVar")
+# z <- z[z$myVar>0,] #This line truncates the distribution so all values > 0
+# str(z)
+# summary(z$myVar)
+
+mamm <- read.csv(file = "C:/users/beasley/dropbox/Thesis Stuff/summer mamm.csv",
+                   sep = ",")
+
+mamm %>%
+  filter(Species == "Sigmodon hispidus", Mass != ">300"|Mass != "") %>%
+  select(Mass) %>%
+  droplevels() %>%
+  {. ->> fatrat}
+
+fatrat <- data.frame(1:length(fatrat), fatrat)
+fatrat$Mass <- as.numeric(as.character(fatrat$Mass))
+str(fatrat)
+summary(fatrat$Mass)
+```
+
+Plot a histogram of the data and add density curve
+```{r}
+# plot.gen <- ggplot(data=z, aes(x=myVar, y=..density..)) +
+#   geom_histogram(color="grey60",fill="cornsilk",size=0.2)+
+#   geom_density(linetype="dotted",size=0.75)
+# 
+# plot.gen
+
+ratplot <- ggplot(data = fatrat, aes(x = Mass, y = ..density..))+
+  geom_histogram(color = "grey60", fill = "grey", size = 0.2)+
+  geom_density(linetype = "dotted", size = 0.75)+
+  theme_bw()
+
+ratplot  
+
+#It's bimodal. Huzzah.
+```
+
+Get maximum likelihood parameters for a normal distribution:
+```{r}
+#Fit the distribution
+# normPars <- fitdistr(z$myVar,"normal")
+# #Look at it
+# print(normPars)
+# str(normPars)
+# normPars$estimate["mean"]
+
+normPars <- fitdistr(fatrat$Mass,"normal")
+#Look at it
+print(normPars)
+str(normPars)
+normPars$estimate["mean"]
+```
+
+Plot probability density
+```{r}
+#Pull mean and stdev from data
+# meanML <- normPars$estimate["mean"]
+# sdML <- normPars$estimate["sd"]
+# 
+# #Generate x values
+# xval <- seq(0,max(z$myVar),len=length(z$myVar))
+# 
+# #This fits a curve based on the distribution function ("fun") and the 
+# #parameters you provide ("args")
+# stat <- stat_function(aes(x = xval, y = ..y..), fun = dnorm, colour="red", 
+#                        n = length(z$myVar), args = list(mean = meanML, sd = sdML))
+# plot.gen + stat
+
+meanML <- normPars$estimate["mean"]
+sdML <- normPars$estimate["sd"]
+
+#Generate x values
+xval <- seq(0,max(fatrat$Mass),len=length(fatrat$Mass))
+
+#This fits a curve based on the distribution function ("fun") and the 
+#parameters you provide ("args")
+stat <- stat_function(aes(x = xval, y = ..y..), fun = dnorm, colour="red", 
+                       n = length(fatrat$Mass), args = list(mean = meanML, 
+                                                            sd = sdML))
+ratplot + stat
+```
+
+Plot more probability densities
+```{r}
+# #Exponential
+# expoPars <- fitdistr(z$myVar,"exponential")
+# rateML <- expoPars$estimate["rate"]
+# 
+# stat2 <- stat_function(aes(x = xval, y = ..y..), fun = dexp, colour="blue", 
+#                        n = length(z$myVar), args = list(rate=rateML))
+# plot.gen + stat + stat2
+# 
+# #Uniform
+# stat3 <- stat_function(aes(x = xval, y = ..y..), fun = dunif, colour="darkgreen", 
+#                        n = length(z$myVar), args = list(min=min(z$myVar), 
+#                                                         max=max(z$myVar)))
+# plot.gen + stat + stat2 + stat3
+# 
+# #Gamma
+# gammaPars <- fitdistr(z$myVar,"gamma")
+# shapeML <- gammaPars$estimate["shape"]
+# rateML <- gammaPars$estimate["rate"]
+# 
+# stat4 <- stat_function(aes(x = xval, y = ..y..), fun = dgamma, colour="brown", 
+#                        n = length(z$myVar), args = list(shape=shapeML,
+#                                                         rate=rateML))
+# plot.gen + stat + stat2 + stat3 + stat4
+# 
+# #Beta
+# plotgen.Special <- ggplot(data=z, aes(x=myVar/(max(myVar + 0.1)), 
+#                                       y=..density..)) +
+#   geom_histogram(color="grey60",fill="cornsilk",size=0.2) + 
+#   xlim(c(0,1)) +
+#   geom_density(size=0.75,linetype="dotted")
+# 
+# betaPars <- fitdistr(x=z$myVar/max(z$myVar + 0.1),
+#                      start=list(shape1=1,shape2=2),"beta")
+# shape1ML <- betaPars$estimate["shape1"]
+# shape2ML <- betaPars$estimate["shape2"]
+# 
+# statSpecial <- stat_function(aes(x = xval, y = ..y..), fun = dbeta, 
+#                              colour="orchid", n = length(z$myVar), 
+#                              args = list(shape1=shape1ML,shape2=shape2ML))
+# plotgen.Special + statSpecial
+# 
+# #Gamma and beta look pretty good
+
+#Exponential
+expoPars <- fitdistr(fatrat$Mass,"exponential")
+rateML <- expoPars$estimate["rate"]
+
+stat2 <- stat_function(aes(x = xval, y = ..y..), fun = dexp, colour="blue", 
+                       n = length(fatrat$Mass), args = list(rate=rateML))
+ratplot + stat + stat2
+
+#Uniform
+stat3 <- stat_function(aes(x = xval, y = ..y..), fun = dunif, colour="darkgreen", 
+                       n = length(fatrat$Mass), args = list(min=min(fatrat$Mass), 
+                                                        max=max(fatrat$Mass)))
+ratplot + stat + stat2 + stat3
+
+#Gamma
+gammaPars <- fitdistr(fatrat$Mass,"gamma")
+shapeML <- gammaPars$estimate["shape"]
+rateML <- gammaPars$estimate["rate"]
+
+stat4 <- stat_function(aes(x = xval, y = ..y..), fun = dgamma, colour="brown", 
+                       n = length(fatrat$Mass), args = list(shape=shapeML,
+                                                        rate=rateML))
+ratplot + stat + stat2 + stat3 + stat4
+
+#Beta
+ratplot.Special <- ggplot(data=fatrat, aes(x=Mass/(max(Mass + 0.1)), 
+                                      y=..density..)) +
+  geom_histogram(color="grey60",fill="grey",size=0.2) + 
+  xlim(c(0,1)) +
+  geom_density(size=0.75,linetype="dotted")+
+  theme_bw()
+
+betaPars <- fitdistr(x=fatrat$Mass/max(fatrat$Mass + 0.1),
+                     start=list(shape1=1,shape2=2),"beta")
+shape1ML <- betaPars$estimate["shape1"]
+shape2ML <- betaPars$estimate["shape2"]
+
+statSpecial <- stat_function(aes(x = xval, y = ..y..), fun = dbeta, 
+                             colour="orchid", n = length(fatrat$Mass), 
+                             args = list(shape1=shape1ML,shape2=shape2ML))
+ratplot.Special + statSpecial
+
+#And nothing fits because it's bimodal
+```
+
+Maximum likelihood of beta distribution
+```{r}
+betaPars <- fitdistr(x=fatrat$Mass/max(fatrat$Mass + 0.1),
+                     start=list(shape1=1,shape2=2),"beta")
+shape1ML <- betaPars$estimate["shape1"]
+shape2ML <- betaPars$estimate["shape2"]
+
+#Generate beta distribution with the above parameters
+simdata <- rbeta(n = length(fatrat$Mass), shape1 = shape1ML, shape2 = shape2ML)
+
+simframe <- data.frame(1:length(simdata), simdata)
+
+#Plot the simulated data
+ggplot(data = simframe, aes(x = simdata, y = ..density..))+
+  geom_histogram(color = "grey60", fill = "grey", size = 0.2)+
+  geom_density(linetype = "dotted", size = 0.75)+
+  theme_bw()
+
+ratplot
+```
+
+The two plots (simulated & real data) are wildly different due to the bimodal distribution of the real data. This data set includes both juvenile/subadult and adult cotton rats, which may be the cause of the two peaks: one for juvenile mass, the other for adult mass. Choosing one or the other may yield a data set that fits a unimodal distribution fairly well.

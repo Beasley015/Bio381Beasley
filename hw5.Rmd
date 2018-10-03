@@ -20,19 +20,19 @@ glimpse(iris)
 Iris dataset has 150 observations and 5 variables.
 
 ```{r}
-iris1 <- filter(iris, Species == c("virginica", "versicolor"), Sepal.Length > 6,
+iris1 <- filter(iris, Species == "virginica"|Species == "versicolor", Sepal.Length > 6,
                 Sepal.Width > 2.5)
 glimpse(iris1)
 ```
 
-iris1 has 28 observations of 5 variables.
+iris1 has 56 observations of 5 variables.
 
 ```{r}
 iris2 <- select(iris1, Species, Sepal.Length, Sepal.Width)
 glimpse(iris2)
 ```
 
-iris2 has 28 observations of 3 variables.
+iris2 has 56 observations of 3 variables.
 
 ```{r}
 iris3 <- arrange(iris2, desc(Sepal.Length))
@@ -44,7 +44,7 @@ iris4 <- mutate(iris3, Sepal.Area = (Sepal.Length*Sepal.Width))
 glimpse(iris4)
 ```
 
-iris4 has 28 observations of 4 variables.
+iris4 has 56 observations of 4 variables.
 
 ```{r}
 iris5 <- summarize(iris4, avg.length = mean(Sepal.Length), avg.width = mean(Sepal.Width), sample.size = length(Species))
@@ -64,7 +64,7 @@ Clean up that code by piping:
 iris <- iris
 iris %>%
   filter(Sepal.Length > 6, Sepal.Width > 2.5, 
-         Species == c("versicolor","virginica")) %>%
+         Species == "versicolor"|Species == "virginica") %>%
   select(Species, Sepal.Length, Sepal.Width) %>%
   mutate(Sepal.Area = (Sepal.Length*Sepal.Width)) %>%
   group_by(Species) %>%
@@ -73,7 +73,4 @@ iris %>%
   {. ->> iris6 }
 
 print(iris6)
-
-#I don't know why this method gets slightly different counts
-#It's the same code as above
 ```

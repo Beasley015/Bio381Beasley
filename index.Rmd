@@ -65,3 +65,4 @@ ggplot()+
 * [Homework 3: Beamer slides](beamer.pdf)
 * [Homework 4: Vectors & Regular Expressions](hw4.html)
 * [Homework 5: dplyr](hw5.html)
+* [Homework 6: Probability Distributions](hw6.html)
