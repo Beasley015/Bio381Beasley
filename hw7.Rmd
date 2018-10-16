@@ -1,0 +1,91 @@
+---
+title: "Homework 7"
+author: "Emily Beasley"
+date: "October 16, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = F)
+```
+
+The following data sim is a little different from the instructions on the course page. I wanted to do a simulation that was more applicable to my dissertation research. Here, I will be simulating occupancy data for ectoparasites on mammalian hosts.
+
+First, generate some preliminary variables.
+```{r}
+#Mammal species
+mammspecs <- data.frame(as.character(seq(1:10)))
+colnames(mammspecs) <- "mamm.specs"
+
+#assign fake genera to mammals. This will be important later,
+#ectos tend to be phylogenetically conserved
+mammspecs$genus <- c(rep("genus1", 5), rep("genus2", 5))
+
+#Ecto species
+ectospecs <- data.frame(as.character(seq(1:12)))
+colnames(ectospecs) <- "ecto.specs"
+#Twelve ectoparasite species is a low-ish number, but it'll do
+
+#Assign ectos as generalist, specialist, or neither
+ectospecs$life.history <- c(rep("generalist", 4), rep("specialist", 4), 
+                            rep("neither", 4))
+```
+
+Generate occupancy probabilities using this nasty function.
+```{r}
+makin.data <- function(){
+  #Create empty objects
+  genus <- logical()
+  occprobs <- matrix(NA, nrow = 12, ncol = 10)
+  
+  for(i in 1:length(ectospecs$ecto.specs)){
+  #Assign a mammal genus to the ecto species
+  genus[i] <- sample(mammspecs$genus, size = 1)
+  
+  #Generalist species: can occupy all species in a genus
+  if(ectospecs$life.history[i] == "generalist"){
+    #Generate occupancy probs for all mamm in the genus
+    for(j in 1:length(mammspecs$mamm.specs)){
+      if(mammspecs$genus[j] == genus[i]){
+        occprobs[i,j] <- runif(1, 0, 1)
+      } else{
+        occprobs[i,j] <- 0
+      }
+    }
+    
+  #Specialist species: Only one host  
+  } else if(ectospecs$life.history[i] == "specialist"){
+    #Generate an occupancy prob for a single host
+    host <- sample(mammspecs$mamm.specs, size = 1)
+    for(j in 1:length(mammspecs$mamm.specs))
+      if(mammspecs$mamm.specs[j] == host){
+        occprobs[i,j] <- runif(1,0,1)
+      } else{
+        occprobs[i,j] <- 0
+      }
+  
+  #"Neither" category: one primary and one secondary host
+  } else if(ectospecs$life.history[i] == "neither"){
+      #Generate occupancy prob for a primary and secondary host
+        sample <- sample(which(mammspecs$genus == genus[i]), 2)
+        occprobs[i, sample[1]] <- runif(1, 0.5, 1) #primary host
+        occprobs[i, sample[2]] <- runif(1, 0, 0.5) #secondary host
+        occprobs[is.na(occprobs)] <- 0
+  }
+  }
+  return(occprobs)
+}
+
+some.data <- makin.data()
+```
+
+Now I have occupancy data for each host species. The problem: for the multiscale model to work, I need to treat each host population as a site. So I'll draw a probability for each population using the host species probability as a mean.
+```{r}
+#Decide how many physical sites to "sample" from
+n.site <- 20 #This is ususally the minimum for an effective abundance model
+
+#Create a vector with the name of each host population
+
+#Generate an occupancy prob for each host population based on 
+#the species-level occupancy prob
+```
