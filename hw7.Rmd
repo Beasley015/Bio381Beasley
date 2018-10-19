@@ -7,12 +7,16 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = F)
+library(msm)
+library(tidyverse)
 ```
 
-The following data sim is a little different from the instructions on the course page. I wanted to do a simulation that was more applicable to my dissertation research. Here, I will be simulating occupancy data for ectoparasites on mammalian hosts.
+The following data sim is a little different from the instructions on the course page. I wanted to do a simulation that was more applicable to my dissertation research. I will simulate some occupancy data for ectoparasites on mammalian hosts that will eventually be used to build a multi-scale occupancy model. Since the model will take a long time to figure out, for this assignment I'm going to demonstrate how imperfect detection can affect ectoparasite richness counts.
 
 First, generate some preliminary variables.
 ```{r}
+set.seed(15)
+
 #Mammal species
 mammspecs <- data.frame(as.character(seq(1:10)))
 colnames(mammspecs) <- "mamm.specs"
@@ -85,7 +89,98 @@ Now I have occupancy data for each host species. The problem: for the multiscale
 n.site <- 20 #This is ususally the minimum for an effective abundance model
 
 #Create a vector with the name of each host population
+write.names <- function(x){
+  spec.names <- logical(length = length(x))
+  for(i in 1:length(x)){
+    spec.names[i] <- as.character(paste("Spec",x[i], sep = "")) 
+  }
+  return(spec.names)
+} 
+
+write.sites <- function(x){
+  site.names <- logical(length = x)
+  for(i in 1:x){
+    site.names[i] <- as.character(paste("Site",i,sep = ""))
+  }
+  return(site.names)
+}
+
+names <- write.names(x = mammspecs$mamm.specs)
+sites <- write.sites(x = n.site)
 
 #Generate an occupancy prob for each host population based on 
 #the species-level occupancy prob
+spec.probs.array <- function(x,y,z){
+pop.array <- array(dim = c(length(x), y,length(z)))
+
+for(i in 1:length(x)){
+  for(j in 1:y){
+    for(k in 1:length(z)){
+      if(some.data[k,i] != 0){
+          pop.array[i,j,k] <- rtnorm(n = 1, mean = some.data[k,i], sd = 0.05, 
+                                    lower = 0, upper = 1)
+        #Use a truncated normal distribution to make sure it's a probability
+        #May use a different distribution later
+      } else{
+        pop.array[i,j,k] <- 0
+    }
+  }
+  }
+}
+return(pop.array)
+}
+
+poparray <- spec.probs.array(x = mammspecs$mamm.specs, y = n.site, 
+                            z = ectospecs$ecto.specs)
+
+#Function to convert array into data frame
+spec.probs.mat <- function(x){
+  popoccs <- matrix(NA, nrow = dim(x)[1]*dim(x)[2], ncol = dim(x)[3])
+  for(i in 1:dim(x)[3]){
+    popoccs[,i] <- as.vector(x[,,i])
+  }
+  popoccs <- as.data.frame(popoccs)
+  return(popoccs)
+}
+
+popmat <- spec.probs.mat(x = poparray)
+```
+
+Use the occupancy probabilities to generate sample presence-absence data.
+```{r}
+get.occs <- function(x){
+  occstate <- matrix(NA, nrow = length(x[,1]), ncol = length(x[1,]))
+  for(i in 1:length(x[,1])){
+    for(j in 1:length(x[1,])){
+      occstate[i,j] <- rbernoulli(n = 1, p = popmat[i,j])
+      occstate[which(occstate[i,j] == TRUE)] <- 1
+      occstate[which(occstate[i,j] == FALSE)] <- 0
+    }
+  }
+  return(occstate)
+}
+  
+occstate <- get.occs(x = popmat)
+
+#Now combine all of this nonsense into a single data frame
+specnames <- rep(names, length(sites))
+
+sitenames <- list()
+for(i in 1:length(sites)){
+  sitenames[[i]] <- rep(sites[i], length(names))
+}
+sitenames <- unlist(sitenames)
+
+occ.mat <- cbind(names, sitenames, occstate)
+
+#Last thing: convert matrix to long form
+occ.mat %>%
+  as.data.frame() %>%
+  gather(V3:V14, key = "Ecto", value = "Prob") %>%
+  {. ->> long.occ}
+```
+
+
+```{r}
+
 ```
