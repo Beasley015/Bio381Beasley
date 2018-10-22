@@ -105,6 +105,15 @@ write.sites <- function(x){
   return(site.names)
 }
 
+write.ectos <- function(x){
+  ectos <- logical()
+  for(i in 1:length(x)){
+    ectos[i] <- paste("Ecto",i, sep = "")
+  }
+  return(ectos)
+}
+
+ectos <- write.ectos(x = ectospecs$ecto.specs)
 names <- write.names(x = mammspecs$mamm.specs)
 sites <- write.sites(x = n.site)
 
@@ -163,24 +172,33 @@ get.occs <- function(x){
 occstate <- get.occs(x = popmat)
 
 #Now combine all of this nonsense into a single data frame
-specnames <- rep(names, length(sites))
+many.names <- expand.grid(names, sites)
 
-sitenames <- list()
-for(i in 1:length(sites)){
-  sitenames[[i]] <- rep(sites[i], length(names))
-}
-sitenames <- unlist(sitenames)
-
-occ.mat <- cbind(names, sitenames, occstate)
+occ.mat <- cbind(many.names, occstate)
+colnames(occ.mat) <- c("Mammal", "Site", ectos)
 
 #Last thing: convert matrix to long form
 occ.mat %>%
   as.data.frame() %>%
-  gather(V3:V14, key = "Ecto", value = "Prob") %>%
+  gather(Ecto1:Ecto12, key = "Ecto", value = "Prob") %>%
   {. ->> long.occ}
 ```
 
-
+Next, I need to model the sampling process. I will treat individual hosts as replicates of the population. The mammal abundance data comes from a simulated multi-species abundance model, not shown in this file.
 ```{r}
+#Read in mammal data
+mamms <- readRDS(file = "truemamm.RDS")
+
+#Trim it
+mammZ <- mamms[,1:length(sites)]
+
+#Simulate mean detection prob for each ectoparasite
+ecto.dets <- runif(n = length(ectos), min = 0, max = 0.2)
+#Detection probs for ectoparasites in reality are usually low
+#Parasites also tend to aggregate, but for now I'm not messing with that
+
+#Create vector with numbers of sampling events K
+Ks <- as.vector(mammZ)
+
 
 ```
