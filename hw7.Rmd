@@ -11,7 +11,7 @@ library(msm)
 library(tidyverse)
 ```
 
-The following data sim is a little different from the instructions on the course page. I wanted to do a simulation that was more applicable to my dissertation research. I will simulate some occupancy data for ectoparasites on mammalian hosts that will eventually be used to build a multi-scale occupancy model. Since the model will take a long time to figure out, for this assignment I'm going to demonstrate how imperfect detection can affect ectoparasite richness counts.
+The following data sim is a little different from the instructions on the course page. I wanted to do a simulation that was more applicable to my dissertation research. I will simulate some occupancy data for ectoparasites on mammalian hosts that will eventually be used to build a multi-scale occupancy model. Since the model will take a long time to figure out, for this assignment I'm going to see how many sites I need to sample to detect all 12 ecto species.
 
 First, generate some preliminary variables.
 ```{r}
@@ -189,16 +189,24 @@ Next, I need to model the sampling process. I will treat individual hosts as rep
 #Read in mammal data
 mamms <- readRDS(file = "truemamm.RDS")
 
-#Trim it
-mammZ <- mamms[,1:length(sites)]
+#Sample from a smaller number of sites
+mamm.sites <- sample(seq(length(mamms[1,])), size = n.site, replace = F)
+mammZ <- mamms[,mamm.sites]
 
 #Simulate mean detection prob for each ectoparasite
+#Same det prob regardless of host species
 ecto.dets <- runif(n = length(ectos), min = 0, max = 0.2)
 #Detection probs for ectoparasites in reality are usually low
 #Parasites also tend to aggregate, but for now I'm not messing with that
 
 #Create vector with numbers of sampling events K
 Ks <- as.vector(mammZ)
+maxK <- max(Ks)
 
+#Create detection histories
+L <- list()
 
+for(i in 1:length(ectos)){
+  
+}
 ```

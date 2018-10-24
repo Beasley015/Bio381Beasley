@@ -66,3 +66,6 @@ ggplot()+
 * [Homework 4: Vectors & Regular Expressions](hw4.html)
 * [Homework 5: dplyr](hw5.html)
 * [Homework 6: Probability Distributions](hw6.html)
+* Homework 7: In progress
+* Homework 8: In progress
+* [Homework 9: Looping structures](hw9.html)

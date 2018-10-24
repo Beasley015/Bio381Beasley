@@ -1,0 +1,115 @@
+---
+title: "Homework 9"
+author: "Emily Beasley"
+date: "October 24, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+```
+
+Problems 1 & 2: calculate number of zeroes in a vector
+```{r}
+vector1 <- sample(-5:5, size = 10, replace = T)
+
+#using a for loop
+newvec <- logical()
+for(i in 1:length(vector1)){
+  ifelse(vector1[i] == 0, newvec[i] <- 1, newvec[i] <- 0)
+}
+
+sum(newvec)
+
+#using a single line
+length(which(vector1 == 0))
+```
+
+Problems 3-5: pairwise differences
+```{r}
+#Write a function that stores diffs in a vector, then extracts the maximum value
+max.diff <- function(x){
+  diffs <- as.numeric(dist(x))
+  return(max(diffs))
+}
+
+max.diff(vector1)
+
+#Now make the output a list including: pair of elements, position of these
+#elements in the vector, and the difference between them
+list.diff <- function(x){
+ mat1 <- expand.grid(x,x)
+ mat1$diff <- mat1$Var1-mat1$Var2
+ mat2 <- subset(mat1, mat1$diff == max(mat1$diff))
+ 
+ mat2$pos1 <- which(mat2$Var1 == vector1)
+ mat2$pos2 <- which(mat2$Var2 == vector1)
+ 
+ difflist <- list()
+ for(i in 1:length(mat2$diff)){
+   difflist[[i]] <- list(
+     values = as.character(paste(mat2$Var1[i],mat2$Var2[i], sep = ",")),
+     position = as.character(paste(mat2$pos1[i], mat2$pos2[i], sep = ",")),
+     diff = mat2$diff[i]
+     )
+ }
+ return(difflist)
+}
+
+difflist <- list.diff(x = vector1)
+print(difflist)
+
+#There has to be an easier way to do that, but it works
+
+#Next step: Cycle through all differences, retain only the largest difference
+largest.diff <- function(x){
+  vecs <- expand.grid(x,x)
+  diff <- 0
+  for(i in 1:length(vecs$Var1)){
+    tempdiff <- as.numeric(abs(vecs$Var1[i]-vecs$Var2[i]))
+    if(tempdiff >= diff){
+      diff <- tempdiff
+    }
+  }
+  return(diff)
+}
+
+diff <- largest.diff(x = vector1)
+print(diff)
+```
+
+Problem 6: Multiply matrices
+```{r}
+mat1 <- matrix(1:6, nrow = 2, ncol = 3)
+mat2 <- matrix(7:18, nrow = 3, ncol = 4)
+
+# mats <- function(x,y){
+#   z <- x*y
+#   return(z)
+# }
+# 
+# mat3 <- mats(x = mat1, y = mat2) 
+# Apparently R can't do simple matrix multiplication, even if dims are correct
+
+mat3 <- mat1 %*% mat2
+print(mat3)
+```
+
+Problem 7: Fill a matrix based on given dimensions
+```{r}
+row <- 2
+col <- 3
+
+make.mat <- function(x,y){
+  mat <- matrix(NA, nrow = x, ncol = y)
+  for(i in 1:x){
+    for(j in 1:y){
+      mat[i,j] <- i*j
+    }
+  }
+  return(mat)
+}
+
+mat <- make.mat(x = row, y = col)
+print(mat)
+```
