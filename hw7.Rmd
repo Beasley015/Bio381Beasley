@@ -238,5 +238,22 @@ colnames(obsmat) <- c("Site", "Species", ectos)
 
 Determine site-level and host-level ectoparasite richness
 ```{r}
+#Coerce into long format
+longdat <- function(x){
+  x %>%
+    gather(Ecto1:Ecto12, key = "Ecto", value = "PresAbs")
+}
 
+long.occ <- longdat(x = occ.mat)
+long.obs <- longdat(x = obsmat)
+
+#Get richness counts by species
+spec.richness <- function(x){
+  x %>%
+    group_by(Mammal, Ecto) %>%
+    summarize(counts = sum(PresAbs)) 
+}
+
+spec.occ <- spec.richness(long.occ)
+  
 ```
