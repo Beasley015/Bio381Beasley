@@ -11,7 +11,9 @@ library(msm)
 library(tidyverse)
 ```
 
-The following data sim is a little different from the instructions on the course page. I wanted to do a simulation that was more applicable to my dissertation research. I will simulate some occupancy data for ectoparasites on mammalian hosts that will eventually be used to build a multi-scale occupancy model. Since the model will take a long time to figure out, for this assignment I'm going to see how many sites I need to sample to detect all 12 ecto species.
+The following data sim is a little different from the instructions on the course page. I wanted to do a simulation that was more applicable to my dissertation research. I will simulate some occupancy data for ectoparasites on mammalian hosts that will eventually be used to build a multi-scale occupancy model. 
+
+Since the model will take a long time to figure out, for this assignment I'm going to demonstrate how imperfect detection can bias richness counts. Assignment 8 will involve condensing this code into a few functions and determining the minimum number of sites needed to detect all ectoparasite species
 
 First, generate some preliminary variables.
 ```{r}
@@ -207,6 +209,34 @@ maxK <- max(Ks)
 L <- list()
 
 for(i in 1:length(ectos)){
-  
+  y <- matrix(NA, nrow = length(Ks), ncol = maxK)
+  for(k in 1:length(Ks)){
+    for(j in 1:Ks[k]){
+      y[k,j] <- as.numeric(rbernoulli(n = 1, p = ecto.dets[i]))
+    }
+  }
+  L[[i]] <- y
 }
+
+#Change list of matrices into array
+obsdata<-array(unlist(L), dim=c(length(Ks), maxK, length(ectos)))
+#Change NA to 0
+obsdata[is.na(obsdata)] <- 0
+
+#Add all observed occurances; if there is more than 1, change to 1
+obsdata2 <- apply(obsdata, c(1,3), sum)
+obsdata2[obsdata2 >= 1] <- 1
+
+#Turn matrix into a data.frame and name the columns
+obsdata2 <- as.data.frame(obsdata2)
+
+#bind the observation data with site and species names
+obsmat <- bind_cols(many.names, obsdata2)
+#Rename columns
+colnames(obsmat) <- c("Site", "Species", ectos)
+```
+
+Determine site-level and host-level ectoparasite richness
+```{r}
+
 ```
