@@ -251,9 +251,11 @@ long.obs <- longdat(x = obsmat)
 spec.richness <- function(x){
   x %>%
     group_by(Mammal, Ecto) %>%
-    summarize(counts = sum(PresAbs)) 
+    summarize(counts = sum(PresAbs))
+  
+  x$counts[which(x$counts >= 1)] <- 1
 }
 
-spec.occ <- spec.richness(long.occ)
+spec.occ <- spec.richness(x = long.occ)
   
 ```
