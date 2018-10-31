@@ -212,7 +212,7 @@ for(i in 1:length(ectos)){
   y <- matrix(NA, nrow = length(Ks), ncol = maxK)
   for(k in 1:length(Ks)){
     for(j in 1:Ks[k]){
-      y[k,j] <- as.numeric(rbernoulli(n = 1, p = ecto.dets[i]))
+      y[k,j] <- as.numeric(rbernoulli(n = 1, p = ecto.dets[i]*occstate[k,i]))
     }
   }
   L[[i]] <- y
@@ -233,7 +233,7 @@ obsdata2 <- as.data.frame(obsdata2)
 #bind the observation data with site and species names
 obsmat <- bind_cols(many.names, obsdata2)
 #Rename columns
-colnames(obsmat) <- c("Site", "Species", ectos)
+colnames(obsmat) <- c("Mammal", "Site", ectos)
 ```
 
 Determine site-level and host-level ectoparasite richness
@@ -251,11 +251,32 @@ long.obs <- longdat(x = obsmat)
 spec.richness <- function(x){
   x %>%
     group_by(Mammal, Ecto) %>%
-    summarize(counts = sum(PresAbs))
+    summarize(counts = sum(PresAbs)) %>%
+    ungroup() %>%
+    {. ->> temp}
   
-  x$counts[which(x$counts >= 1)] <- 1
+  temp$counts[which(temp$counts >= 1)] <- 1
+  temp %>%
+    group_by(Mammal) %>%
+    summarize(richness = sum(counts)) %>%
+    {. ->> rich}
+  
+  return(rich)
 }
 
 spec.occ <- spec.richness(x = long.occ)
-  
+spec.obs <- spec.richness(x = long.obs)
+
+#Put into one data.frame and order by true richness
+spec.rich <- data.frame(rank = rank(spec.occ$richness), spec.occ, spec.obs[,2])
+
+#plot it
+ggplot(data = spec.rich, aes(x = rank))+
+  geom_point(aes(y = richness, color = "True"))+
+  geom_smooth(aes(y = richness, color = "True"))+
+  geom_point(aes(y = richness.1, color = "Observed"))+
+  geom_smooth(aes(y = richness.1, color = "Observed"))+
+  theme_bw()
+
+#Richness counts by site  
 ```

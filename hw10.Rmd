@@ -1,0 +1,130 @@
+---
+title: "Homework 10"
+author: "Emily Beasley"
+date: "October 31, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+library(ggplot2)
+```
+
+Problems 1 and 2 are taken from Homework 9, since they're the same problems with different variable names.
+```{r}
+vector1 <- sample(-3:3, size = 10, replace = T)
+
+#using a for loop
+newvec <- logical()
+for(i in 1:length(vector1)){
+  ifelse(vector1[i] == 0, newvec[i] <- 1, newvec[i] <- 0)
+}
+
+sum(newvec)
+
+#using a single line
+length(which(vector1 == 0))
+```
+
+Problem 3. Write a function that takes as input two integers representing the number of rows and columns in a matrix. The output is a matrix of these dimensions in which each element is the product of the row number x the column number.
+```{r}
+rows <- 2
+cols <- 3
+
+mat <- matrix(NA, nrow = rows, ncol = cols)
+for(i in 1:rows){
+  for(j in 1:cols){
+    mat[i,j] <- i*j
+  }
+}
+
+print(mat)
+```
+
+Problem 4. Use the code from yesterday’s class to design and conduct a randomization test for some of your own data. To finish this assignment in a reasonable amount of time, I'm going to use some data from my master's thesis and see if the species richness/area slope I found is a significant departure from randomness.
+```{r}
+#Set the seed
+set.seed(15)
+
+#Load global variables
+areas <- readRDS(file = "area.rds")
+msom.out <- readRDS(file = "modelsanscovs.rds") #Note: this actually had covs
+
+nsims <- 1000
+
+#Get species richness counts
+get.richness <- function(x){
+  all.rich <- x$sims.list$Nsite
+  mean.Nsite <- apply(all.rich, 2, mean)
+  
+  return(mean.Nsite)
+}
+
+Nsite <- get.richness(x = msom.out)
+
+#put it all into a data.frame
+rich.data <- data.frame(ID = 1:length(Nsite), areas, Nsite)
+
+#Calculate slope of area/richness regression
+getmetric <- function(z){
+  . <- lm(z[,3]~z[,2])
+  . <- summary(.)
+  . <- .$coefficients[2,1]
+  slope <- .
+  
+  return(slope)
+}
+
+obs.slope <- getmetric(z = rich.data)
+
+#Shuffle the data 1000 times to get some random-ish data sets
+shuffle <- function(z, nsims){
+  shuffled.data <- list()
+  for(i in 1:nsims){
+   shuffled.data[[i]] <- data.frame(z[,1:2], sample(z[,3]))
+   
+  }
+  return(shuffled.data)
+}
+
+shuffled.data <- shuffle(z = rich.data, nsims = nsims)
+
+shuffled.slope <- lapply(shuffled.data, getmetric)
+
+#Calculate p-value from simulated metrics
+get.pval <- function(obs, shuffled){
+  p.lower <- mean(shuffled <= obs)
+  p.upper <- mean(shuffled >= obs)
+  return(c(p.lower, p.upper))
+}
+
+pval <- get.pval(obs = obs.slope, shuffled = shuffled.slope)
+print(pval)
+
+#P-value is 0.011, so the observed slope is significantly higher
+
+#Create function to set up data for plotting
+get.frame <- function(x){
+  sims <- unlist(x)
+  df <- data.frame(ID = seq_along(sims), sims)
+  
+  return(df)
+}
+
+df <- get.frame(shuffled.slope)
+
+#Now plot it
+ggplot(data = df, aes(x = df$sims))+
+  geom_histogram(aes(fill = I("limegreen"), color = I("black")))+
+  geom_vline(aes(xintercept = obs.slope, col = "blue"))+
+  theme_bw()
+```
+
+Problem 5: Compare the p-value above (0.011) with the p-value from an actual linear regression. If they're fairly different, change the starting seed or number of replications.
+
+```{r}
+linear <- lm(data = rich.data, Nsite~areas)
+print(summary(linear))
+
+#The p-value here is 0.026, which I think is close enough.
+```
