@@ -1,0 +1,209 @@
+---
+title: "Homework 8"
+author: "Emily Beasley"
+date: "October 31, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+set.seed(15)
+library(msm)
+library(tidyverse)
+```
+
+The following code condenses the simulation from Homework 7. I will use it to determine the minimum number of sites needed to detect all 12 ectoparasite species.
+
+Start by building global variables:
+```{r Global Variables}
+n.mamm <- 10
+mamm.genera <- c("Genus1", "Genus2")
+mamm <- readRDS(file = "truemamm.rds")
+
+n.ecto <- 12
+life.history <- c("generalist", "specialist", "neither")
+
+n.site <- 1:30
+```
+
+Generate occupancy probabilities for each host/ecto pair.
+```{r Host Species Probs}
+spec.occ.probs <- function(n.mamm, genera, n.ecto, life.history){
+  #Generate name vectors for mammals and ectos
+  mammspec <- logical()
+  for(i in 1:n.mamm){
+    mammspec[i] <- as.character(paste("Spec", i, sep = ""))
+  }
+  
+  ectospec <- logical()
+  for(i in 1:n.ecto){
+    ectospec[i] <- as.character(paste("Spec", i, sep = ""))
+  }
+  
+  #Generate mammal and ecto data frames
+  mammdat <- data.frame(mammspec = mammspec,
+                        mammgenus <- sample(genera, size = n.mamm, replace = T))
+  ectodat <- data.frame(ectospec = ectospec, 
+                        ectolife = sample(life.history, size = n.ecto, replace = T))
+  
+  #Generate occupancy probabilities. Commence for loop of hell.
+  genus <- logical()
+  occprobs <- matrix(NA, nrow = n.ecto, ncol = n.mamm)
+  
+  for(i in 1:n.ecto){
+    #Assign a mammal genus to the ecto species
+    genus <- sample(mammdat$mammgenus, size = 1)
+  
+    #Generalist species: can occupy all species in a genus
+    if(ectodat$ectolife[i] == "generalist"){
+      #Generate occupancy probs for all mamm in the genus
+      for(j in 1:n.mamm){
+        if(mammdat$mammgenus[j] == genus){
+          occprobs[i,j] <- runif(1, 0, 1)
+        } else{
+          occprobs[i,j] <- 0
+        }
+      }
+    
+    #Specialist species: Only one host  
+    } else if(ectodat$ectolife[i] == "specialist"){
+      #Generate an occupancy prob for a single host
+      host <- sample(mammdat$mammspec, size = 1)
+      for(j in 1:length(mammdat$mammspec))
+        if(mammdat$mammspec[j] == host){
+          occprobs[i,j] <- runif(1,0,1)
+        } else{
+          occprobs[i,j] <- 0
+        }
+  
+    #"Neither" category: one primary and one secondary host
+    } else if(ectodat$ectolife[i] == "neither"){
+        #Generate occupancy prob for a primary and secondary host
+        somehosts <- sample(which(mammdat$mammgenus == genus), size = 2)
+        occprobs[i, somehosts[1]] <- runif(1, 0.5, 1) #primary host
+        occprobs[i, somehosts[2]] <- runif(1, 0, 0.5) #secondary host
+        occprobs[is.na(occprobs)] <- 0
+  }
+  }
+  return(occprobs)
+}
+
+host.probs <- spec.occ.probs(n.mamm, mamm.genera, n.ecto, life.history)
+```
+
+Generate occupancy probabilities for each ecto on each host population. Probs are drawn from a normal distribution with the host species/ecto species probability as the mean.
+```{r Host Pop Probs}
+pop.occ.probs <- function(x = n.mamm,y,z = n.ecto,mat){
+  pop.array <- array(dim = c(x, y, z))
+
+  for(i in 1:x){
+    for(j in 1:y){
+      for(k in 1:z){
+        if(mat[k,i] != 0){
+            pop.array[i,j,k] <- rtnorm(n = 1, mean = mat[k,i], sd = 0.05, 
+                                    lower = 0, upper = 1)
+          #Use a truncated normal distribution to make sure it's a probability
+          #May use a different distribution later
+        } else{
+          pop.array[i,j,k] <- 0
+      }
+    }
+    }
+  }
+  
+  #Convert array to a matrix
+  popoccs <- matrix(NA, nrow = x*y, ncol = z)
+  for(i in 1:z){
+    popoccs[,i] <- as.vector(pop.array[,,i])
+  }
+  popoccs <- as.data.frame(popoccs)
+}
+
+pop.probs <- pop.occ.probs(y = n.site[4], mat = host.probs)
+```
+
+Use the occupancy probabilities to get presence-absence data
+```{r Occupancy State}
+get.occs <- function(x = n.mamm,y,z = n.ecto,mat){
+  occstate <- matrix(NA, nrow = x*y, ncol = z)
+  for(i in 1:(x*y)){
+    for(j in 1:z){
+      occstate[i,j] <- as.numeric(rbernoulli(n = 1, p = mat[i,j]))
+    }
+  }
+  return(occstate)
+}
+
+occstate <- get.occs(y = n.site[4], mat = pop.probs)
+```
+
+Simulate the detection process, where individual hosts are replicates of the population.
+```{r Detection Data}
+det.data <- function(mamms, n.site, n.ecto, mat){
+  #Sample from a smaller number of sites
+  mamm.sites <- sample(seq(length(mamms[1,])), size = n.site, replace = F)
+  mammZ <- mamms[,mamm.sites]
+
+  #Simulate mean detection prob for each ectoparasite
+  #Same det prob regardless of host species
+  ecto.dets <- runif(n = n.ecto, min = 0, max = 0.2)
+  #Detection probs for ectoparasites in reality are usually low
+  #Parasites also tend to aggregate, but for now I'm not messing with that
+
+  #Create vector with numbers of sampling events K
+  Ks <- as.vector(mammZ)
+  maxK <- max(Ks)
+
+  #Create detection histories
+  L <- list()
+
+  for(i in 1:n.ecto){
+    y <- matrix(NA, nrow = length(Ks), ncol = maxK)
+    for(k in 1:length(Ks)){
+      for(j in 1:Ks[k]){
+        y[k,j] <- as.numeric(rbernoulli(n = 1, p = ecto.dets[i]*mat[k,i]))
+      }
+    }
+    L[[i]] <- y
+  }
+
+  #Change list of matrices into array
+  obsdata<-array(unlist(L), dim=c(length(Ks), maxK, n.ecto))
+  #Change NA to 0
+  obsdata[is.na(obsdata)] <- 0
+
+  #Add all observed occurances; if there is more than 1, change to 1
+  obsdata2 <- apply(obsdata, c(1,3), sum)
+  obsdata2[obsdata2 >= 1] <- 1
+
+  return(obsdata2)
+}
+```
+
+Get regional ectoparasite richness.
+```{r Det Richness}
+det.rich <- function(mat){
+  . <- colSums(mat)
+  reg.rich <- length(which(. > 0))
+}
+```
+
+Putting it all together: How many sites do I need to sample to detect all 12 ectoparasite species?
+```{r}
+ectorich <- logical()
+for(i in seq_along(n.site)){
+  . <- spec.occ.probs(n.mamm = n.mamm, genera = mamm.genera, n.ecto = n.ecto, 
+                      life.history = life.history)
+  . <- pop.occ.probs(y = n.site[i], mat = .)
+  . <- get.occs(y = n.site[i], mat = .)    
+  . <- det.data(mamms = mamm, n.ecto = n.ecto, n.site = n.site[i], mat = .)
+  . <- det.rich(mat = .)
+  ectorich[i] <- .
+}
+
+print(which(ectorich == 12))
+```
+
+Based on this sim, it would take at least 20 sites to consistently detect all ectoparasite species. Even then, it doesn't always happen.
+
+Or you could data-augment an MSOM to model undetected species.

@@ -13,7 +13,7 @@ library(tidyverse)
 
 The following data sim is a little different from the instructions on the course page. I wanted to do a simulation that was more applicable to my dissertation research. I will simulate some occupancy data for ectoparasites on mammalian hosts that will eventually be used to build a multi-scale occupancy model. 
 
-Since the model will take a long time to figure out, for this assignment I'm going to demonstrate how imperfect detection can bias richness counts. Assignment 8 will involve condensing this code into a few functions and determining the minimum number of sites needed to detect all ectoparasite species
+Since the model will take a long time to figure out, for this assignment I'm going to demonstrate how imperfect detection can bias richness counts. Assignment 8 will involve condensing this code into a few functions and determining the minimum number of sites needed to detect all ectoparasite species.
 
 First, generate some preliminary variables.
 ```{r}
@@ -178,12 +178,6 @@ many.names <- expand.grid(names, sites)
 
 occ.mat <- cbind(many.names, occstate)
 colnames(occ.mat) <- c("Mammal", "Site", ectos)
-
-#Last thing: convert matrix to long form
-occ.mat %>%
-  as.data.frame() %>%
-  gather(Ecto1:Ecto12, key = "Ecto", value = "Prob") %>%
-  {. ->> long.occ}
 ```
 
 Next, I need to model the sampling process. I will treat individual hosts as replicates of the population. The mammal abundance data comes from a simulated multi-species abundance model, not shown in this file.
@@ -247,6 +241,9 @@ longdat <- function(x){
 long.occ <- longdat(x = occ.mat)
 long.obs <- longdat(x = obsmat)
 
+print(head(long.occ))
+print(head(long.obs))
+
 #Get richness counts by species
 spec.richness <- function(x){
   x %>%
@@ -272,11 +269,42 @@ spec.rich <- data.frame(rank = rank(spec.occ$richness), spec.occ, spec.obs[,2])
 
 #plot it
 ggplot(data = spec.rich, aes(x = rank))+
-  geom_point(aes(y = richness, color = "True"))+
-  geom_smooth(aes(y = richness, color = "True"))+
-  geom_point(aes(y = richness.1, color = "Observed"))+
-  geom_smooth(aes(y = richness.1, color = "Observed"))+
+  geom_point(aes(y = richness, color = I("Black")))+
+  geom_smooth(aes(y = richness, color = I("Black")))+
+  geom_point(aes(y = richness.1, color = I("Red")))+
+  geom_smooth(aes(y = richness.1, color = I("Red")))+
   theme_bw()
 
 #Richness counts by site  
+site.richness <- function(x){
+    x %>%
+    group_by(Site, Ecto) %>%
+    summarize(counts = sum(PresAbs)) %>%
+    ungroup() %>%
+    {. ->> temp}
+  
+  temp$counts[which(temp$counts >= 1)] <- 1
+  temp %>%
+    group_by(Site) %>%
+    summarize(richness = sum(counts)) %>%
+    {. ->> rich}
+  
+  return(rich)
+}
+
+site.occ <- site.richness(x = long.occ)
+site.obs <- site.richness(x = long.obs)
+
+#Put into one data.frame and order by true richness
+site.rich <- data.frame(rank = rank(site.occ$richness), site.occ, site.obs[,2])
+
+#Plot it again
+ggplot(data = site.rich, aes(x = rank))+
+  geom_point(aes(y = richness, color = I("Black")))+
+  geom_smooth(aes(y = richness, color = I("Black")))+
+  geom_point(aes(y = richness.1, color = I("Red")))+
+  geom_smooth(aes(y = richness.1, color = I("Red")))+
+  theme_bw()
 ```
+
+Based on these graphs, even with repeated sampling, detection error can reduce species richness counts, with a more pronounced effect on site-level richness.
