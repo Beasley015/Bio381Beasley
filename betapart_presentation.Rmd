@@ -1,0 +1,74 @@
+---
+title: "Analyzing occupancy data using betapart"
+author: "Emily Beasley"
+date: "November 15, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+
+library(metacom)
+library(betapart)
+library(tidyverse)
+```
+
+```{r Load Data}
+Zarray <- readRDS(file = "occmats.RDS")
+Zs <- aperm(Zarray, c(2,3,1))
+#Zs is an array that is essentially a list of 32 x 11 occurrence matrices
+
+splitZ <- function(array, sites){
+  y <- apply(array, c(2,3), '[', sites)
+}
+
+split2016 <- splitZ(array = Zs, sites = c(1:16))
+split2017 <- splitZ(array = Zs, sites = c(17:32))
+
+Zmean <- function(x){
+  y <- apply(x, c(1,2), mean)
+  y[which(y < 0.05)] <- 0
+  
+  return(y)
+}
+
+Z2016 <- Zmean(x = split2016)
+Z2016 <- Z2016[,-c(9:11)]
+
+Z2017 <- Zmean(x = split2017)
+Z2017 <- Z2017[,-c(9:11)]
+
+sites <- c(1:16)
+
+specs <- logical()
+for(i in 1:ncol(Z2016)){
+  specs[i] <- as.character(paste("Spec", i, sep = ""))
+}
+
+long.dat <- function(x){
+  x <- as.data.frame(x)
+  colnames(x) <- specs
+  x$Sites <- sites
+  x %>%
+    gather(Spec1:Spec8, key = "Species", value = "OccProb")
+}
+
+long2016 <- long.dat(x = Z2016)
+long2017 <- long.dat(x = Z2017)
+```
+
+```{r Heat Maps}
+occplot1 <- ggplot(data = long2016, aes(x = Species, y = Sites, fill = OccProb))+
+  geom_tile()+
+  scale_fill_gradient(low = "white", high = "black")+
+  theme_bw(base_size = 16)
+
+occplot2 <- ggplot(data = long2017, aes(x = Species, y = Sites, fill = OccProb))+
+  geom_tile()+
+  scale_fill_gradient(low = "white", high = "black")+
+  theme_bw(base_size = 16)
+```
+
+```{r betapart}
+
+```
