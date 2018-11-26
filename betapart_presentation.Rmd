@@ -8,23 +8,30 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
 
-library(metacom)
 library(betapart)
 library(tidyverse)
+library(patchwork)
 ```
 
+Quantifying changes in species composition through space or time is an essential component of community ecology. The following code creates plots for a visual assessment of turnover of small mammal communities over two years of sampling. The package betapart is then used to quantify the temporal turnover. 
+
+The data used here are the result of sampling small mammals in 16 glades in southwest Missouri in summer 2016 and 2017. Glades were clustered into four sampling units. The raw occupancy data was used as the input for a multi-species occupancy model, which accounts for detection error inherent in the sampling process. The posterior output is loaded here as Zarray.
 ```{r Load Data}
 Zarray <- readRDS(file = "occmats.RDS")
 Zs <- aperm(Zarray, c(2,3,1))
 #Zs is an array that is essentially a list of 32 x 11 occurrence matrices
+#Representing 32 sites (16 per sampling year) and 11 mammal species
 
+#Write function for splitting each occurence matrix into two
 splitZ <- function(array, sites){
   y <- apply(array, c(2,3), '[', sites)
 }
 
+#Run function, creating one object for each year
 split2016 <- splitZ(array = Zs, sites = c(1:16))
 split2017 <- splitZ(array = Zs, sites = c(17:32))
 
+#Write function to find mean occ probability. Change probs close to 0 to 0
 Zmean <- function(x){
   y <- apply(x, c(1,2), mean)
   y[which(y < 0.05)] <- 0
@@ -32,19 +39,23 @@ Zmean <- function(x){
   return(y)
 }
 
+#Run the above function for each sampling year, then remove 3 non-detected species
 Z2016 <- Zmean(x = split2016)
 Z2016 <- Z2016[,-c(9:11)]
 
 Z2017 <- Zmean(x = split2017)
 Z2017 <- Z2017[,-c(9:11)]
 
+#Create vector of sites
 sites <- c(1:16)
 
+#Create vector of species names
 specs <- logical()
 for(i in 1:ncol(Z2016)){
   specs[i] <- as.character(paste("Spec", i, sep = ""))
 }
 
+#Write function to put data in long format
 long.dat <- function(x){
   x <- as.data.frame(x)
   colnames(x) <- specs
@@ -53,11 +64,14 @@ long.dat <- function(x){
     gather(Spec1:Spec8, key = "Species", value = "OccProb")
 }
 
+#Run above function
 long2016 <- long.dat(x = Z2016)
 long2017 <- long.dat(x = Z2017)
 ```
 
+Create plots of occupancy probabilities to visualize changes between sampling periods.
 ```{r Heat Maps}
+#Plot occupancy data as a raster/tile geom
 occplot1 <- ggplot(data = long2016, aes(x = Species, y = Sites, fill = OccProb))+
   geom_tile()+
   scale_fill_gradient(low = "white", high = "black")+
@@ -67,8 +81,48 @@ occplot2 <- ggplot(data = long2017, aes(x = Species, y = Sites, fill = OccProb))
   geom_tile()+
   scale_fill_gradient(low = "white", high = "black")+
   theme_bw(base_size = 16)
+
+#Put plots together for side-by-side comparison
+plots <- occplot1|occplot2
 ```
 
+Visually, it appears that many species went locally extinct at several sampling sites. The package betapart can be used to quantify that change.
 ```{r betapart}
 
+#betapart can only use matrices with values of 0 and 1
+Z2016[Z2016 < 1] <- 0
+Z2017[Z2017 < 1] <- 0
+
+#Calculate Jaccard index using function beta.temp
+temporal <- beta.temp(x = Z2016, y = Z2017, index.family = "jaccard")
+
+#Output for beta.temp is a data frame with 3 columns
+#beta.jtu indicates 1-for-1 species substitutions
+#beta.jne indicates species gain or loss without substitution
+#and beta.jac is the full jaccard index
+#Values closer to 1 indicate greater dissimilarity
+print(temporal)
+```
+
+It looks like there was quite a bit of variation in temporal turnover, most of it due to gain or loss without substitution. Based on the occupancy plots, it was probably species loss. 
+
+One final question: did some sampling units undergo more change than others?
+```{r Site turnover}
+site.names <- c(rep("RRSP", 4), rep("CMCA", 4), rep("MTNF", 3), rep("DMCA", 5))
+
+site.turn <- data.frame(site = site.names, turnover = temporal$beta.jac)
+
+model <- aov(data = site.turn, formula = turnover~site)
+summary(model)
+
+#There was a significant site effect. Which site is different?
+contrasts <- TukeyHSD(x = model, which = "site")
+
+print(contrasts)
+#MTNF was different than DMCA
+
+#Plot the ANOVA results
+ggplot(data = site.turn, aes(x = site, y = turnover))+
+  geom_jitter(width = 0.1)+
+  theme_bw()
 ```
